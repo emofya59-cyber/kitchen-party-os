@@ -124,6 +124,8 @@ export function useEventData() {
     addDispatch: (rows: DispatchLogRow[]) => setDispatchLog((prev) => [...rows, ...prev]),
     flushDispatch: () => setDispatchLog((prev) => prev.map((r) => (r.status === 'queued' ? { ...r, status: 'sent', sent_at: new Date().toISOString() } : r))),
     addAudit: (row: AuditTrailRow) => setAudit((prev) => [row, ...prev]),
+    addGuest: (row: GuestRow) => { setGuests((prev) => [row, ...prev.filter((x) => x.id !== row.id)]); setLastPulse('guests:' + Date.now()) },
+    replaceGuest: (tempId: string, row: GuestRow | null) => setGuests((prev) => (row ? [row, ...prev.filter((x) => x.id !== tempId && x.id !== row.id)] : prev.filter((x) => x.id !== tempId))),
   }
 
   const reset = useCallback(() => {

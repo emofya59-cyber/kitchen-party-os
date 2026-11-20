@@ -186,7 +186,8 @@ export default function App() {
           </div>
           <div className="print:hidden">
             <GuestTracker guests={d.guests} dispatchLog={d.dispatchLog} live={d.live} ev={ev} onSetRsvp={(id, s) => void d.setRsvp(id, s)}
-              onLocalDispatch={d.local.addDispatch} onLocalFlush={d.local.flushDispatch} />
+              onLocalDispatch={d.local.addDispatch} onLocalFlush={d.local.flushDispatch}
+              onAddGuest={d.local.addGuest} onReplaceGuest={d.local.replaceGuest} />
           </div>
           <div className="grid gap-5 lg:grid-cols-2 print:hidden">
             <RunOfShow plan={d.plan} />
