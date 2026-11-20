@@ -96,6 +96,13 @@ export function PayModal({ target, live, autoRun, onClose, onLocalPaid }: {
       } else {
         r = 'EP-LSK-' + Math.random().toString(36).slice(2, 8).toUpperCase()
         onLocalPaid(target!.paymentId, r, num, network)
+        const caterer = target!.vendorRef === 'ba-mwapes-kitchen'
+        window.dispatchEvent(new CustomEvent('kpos-bridge-local', { detail: {
+          id: crypto.randomUUID(), event_id: '', from_agent: 'HostBot', to_agent: caterer ? 'WoodlandsCatererBot' : target!.vendorName,
+          action_type: 'deposit_paid', status: 'PAID', created_at: new Date().toISOString(),
+          message: `Elicate Pay deposit PAID: ZMW ${Number(target!.amount).toLocaleString('en-ZM')} (Receipt ${r})`,
+          payload_json: { status: 'PAID', deposit_zmw: target!.amount, receipt_id: r, vendor_ref: target!.vendorRef, simulated: true },
+        } }))
       }
       setReceipt(r); setStep('done')
     } catch (e) { setErr(e instanceof Error ? e.message : String(e)); setStep('error') }

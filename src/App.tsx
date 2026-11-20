@@ -19,6 +19,7 @@ import { GuestTracker } from './components/GuestTracker'
 import { OpsAgent } from './components/OpsAgent'
 import { QrCard } from './components/QrCard'
 import { DemoBar } from './components/DemoBar'
+import { CookingPot } from 'lucide-react'
 
 const WOODLANDS_BRIEF = '120 guests, kitchen party in Woodlands on Sat 5 Dec, budget ZMW 25,000, nshima + 3 relishes + cake'
 
@@ -88,17 +89,17 @@ export default function App() {
     { id: 'counter', label: 'Fallback: Simulate Caterer Bot Counter-Offer', run: async () => {
       const g = Math.max(planRef.current.event.guest_count, 135)
       await sendBridge({ from_agent: 'WoodlandsCatererBot', to_agent: 'HostBot', action_type: 'quote',
-        message: `Muli shani! For ${g} guests I can do ZMW ${(16740).toLocaleString('en-ZM')} if we swap village chicken for beef stew (saves ZMW 675). Delivery 12:00 sharp. Example estimate.`,
-        payload_json: { vendor_ref: 'ba-mwapes-kitchen', guest_count: g, total_zmw: 16740, deposit_zmw: 5022, currency: 'ZMW', price_basis: 'example_estimate', delivery_time: '2026-12-05T12:00:00+02:00',
+        message: `Muli shani! For ${g} guests the full menu plus drinks comes to ZMW ${(g * 129).toLocaleString('en-ZM')} (example estimate). The 30% deposit is ZMW ${Math.round(g * 129 * 0.3).toLocaleString('en-ZM')} via Elicate Pay.`,
+        payload_json: { vendor_ref: 'ba-mwapes-kitchen', guest_count: g, total_zmw: g * 129, deposit_zmw: Math.round(g * 129 * 0.3), currency: 'ZMW', price_basis: 'example_estimate', delivery_time: '2026-12-05T12:00:00+02:00',
           menu: [
-            { name: 'Nshima (white maize)', quantity: g, unit_cost_zmw: 12 }, { name: 'Village chicken (stewed)', quantity: g, unit_cost_zmw: 40 },
+            { name: 'Nshima (white maize)', quantity: g, unit_cost_zmw: 12 }, { name: 'Village chicken (stewed)', quantity: g, unit_cost_zmw: 45 },
             { name: 'Kapenta with tomato & onion', quantity: g, unit_cost_zmw: 20 }, { name: 'Ifisashi (greens in groundnut sauce)', quantity: g, unit_cost_zmw: 15 },
             { name: 'Impwa (garden eggs) with tomato', quantity: g, unit_cost_zmw: 12 }, { name: 'Chikanda (African polony) slices', quantity: g, unit_cost_zmw: 10 },
             { name: 'Soft drinks, Maheu & water', quantity: g, unit_cost_zmw: 15 },
           ] } })
     } },
     { id: 'pay', label: 'Simulate Elicate Pay Deposit', run: () => {
-      const t = targets[0] ?? { vendorRef: 'chanda-cakes', vendorName: 'Chanda Cakes & Bakes', amount: 1400 }
+      const t = targets.find((x) => x.vendorRef === 'ba-mwapes-kitchen') ?? targets[0] ?? { vendorRef: 'chanda-cakes', vendorName: 'Chanda Cakes & Bakes', amount: 1400 }
       setPayAuto(true); setPayTarget(t)
     } },
     { id: 'reset', label: 'Reset Demo', run: async () => {
@@ -119,7 +120,7 @@ export default function App() {
       <header className="sticky top-0 z-30 border-b border-zinc-800 bg-zinc-950/80 backdrop-blur print:hidden">
         <div className="mx-auto flex max-w-[1500px] flex-wrap items-center justify-between gap-3 px-5 py-3">
           <div className="flex items-center gap-3">
-            <div className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-orange-600 to-amber-400 text-xl shadow-lg shadow-orange-900/40">🍲</div>
+            <div className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-orange-600 to-amber-400 shadow-lg shadow-orange-900/40"><CookingPot className="h-5 w-5 text-white" strokeWidth={2.25} /></div>
             <div>
               <h1 className="text-lg font-black tracking-tight">Kitchen Party OS <span className="ml-1 rounded bg-zinc-800 px-1.5 py-0.5 align-middle text-[10px] font-semibold text-zinc-400">COMMAND CENTER</span></h1>
               <p className="text-xs text-zinc-500">AI event ops for Lusaka · powered by Grok</p>

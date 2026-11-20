@@ -76,7 +76,7 @@ export function NegotiationFeed({ eventId, onApplied, reloadKey, onRows }: { eve
         {sorted.map((r) => {
           const host = r.from_agent === 'HostBot'
           const p = (r.payload_json ?? {}) as Record<string, unknown>
-          const amount = zmw(p.counter_total_zmw ?? p.total_zmw)
+          const amount = zmw(p.counter_total_zmw ?? p.total_zmw ?? p.deposit_zmw)
           const actionable = r.status === 'pending' && (r.action_type === 'quote' || r.action_type === 'counter_offer') && r.from_agent !== 'HostBot'
           return (
             <li key={r.id} className={`rounded-xl border p-3 ${host ? 'ml-8 border-sky-900 bg-sky-950/60' : 'mr-8 border-amber-900 bg-amber-950/40'}`}>
@@ -89,7 +89,7 @@ export function NegotiationFeed({ eventId, onApplied, reloadKey, onRows }: { eve
               <p className="mt-1 text-sm text-zinc-200">{r.message}</p>
               <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px]">
                 <span className="rounded bg-zinc-800 px-1.5 py-0.5 font-mono text-zinc-400">{r.action_type}</span>
-                <span className={`rounded px-1.5 py-0.5 ${r.status === 'pending' ? 'bg-amber-900 text-amber-200' : r.status === 'accepted' || r.status === 'applied' ? 'bg-emerald-900 text-emerald-200' : 'bg-zinc-800 text-zinc-400'}`}>{r.status}</span>
+                <span className={`rounded px-1.5 py-0.5 ${r.status === 'pending' ? 'bg-amber-900 text-amber-200' : r.status === 'accepted' || r.status === 'applied' || r.status === 'PAID' ? 'bg-emerald-900 text-emerald-200' : 'bg-zinc-800 text-zinc-400'}`}>{r.status}</span>
                 {amount && <span className="font-semibold text-zinc-100">{amount}</span>}
                 {typeof p.guest_count === 'number' && <span className="text-zinc-400">{p.guest_count} guests</span>}
               </div>
