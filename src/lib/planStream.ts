@@ -38,9 +38,11 @@ export async function streamPlan(req: PlanRequest, cb: StreamCallbacks, signal?:
       body: JSON.stringify(body),
       signal,
     })
-  } catch (e) {
-    return cb.onError(`Network error: ${String(e)}`)
+  } catch {
+    return simulate(req, cb, signal) // edge function unreachable → offline planner keeps the demo alive
   }
+  // Not deployed yet (404) or XAI_API_KEY missing (500): fall back to the offline planner.
+  if (res.status === 404 || res.status === 500 || res.status === 401) return simulate(req, cb, signal)
   if (!res.ok || !res.body) return cb.onError(`plan-event failed (${res.status}): ${await res.text().catch(() => '')}`)
 
   const reader = res.body.getReader()
