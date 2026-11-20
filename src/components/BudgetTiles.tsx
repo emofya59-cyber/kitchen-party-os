@@ -15,14 +15,14 @@ export function BudgetTiles({ plan }: { plan: Plan }) {
     <div>
       <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
         {tiles.map((t) => (
-          <div key={t.label} className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
-            <p className="text-xs font-medium uppercase tracking-wide text-stone-500">{t.label}</p>
-            <p className={`mt-1 text-2xl font-bold tabular-nums ${t.tone ?? 'text-stone-900'}`}>{t.value}</p>
-            <p className="text-xs text-stone-400">{t.sub}</p>
+          <div key={t.label} className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4 shadow-sm">
+            <p className="text-xs font-medium uppercase tracking-wide text-zinc-400">{t.label}</p>
+            <p className={`mt-1 text-2xl font-bold tabular-nums ${t.tone ?? 'text-zinc-50'}`}>{t.value}</p>
+            <p className="text-xs text-zinc-500">{t.sub}</p>
           </div>
         ))}
       </div>
-      <div className="mt-3 h-2 overflow-hidden rounded-full bg-stone-200">
+      <div className="mt-3 h-2 overflow-hidden rounded-full bg-zinc-800">
         <div className={`h-full rounded-full transition-all duration-700 ${over ? 'bg-rose-500' : 'bg-emerald-500'}`} style={{ width: `${pct}%` }} />
       </div>
     </div>
