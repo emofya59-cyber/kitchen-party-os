@@ -30,11 +30,13 @@ export type VendorCatalogItemRow = { id: string; vendor_id: string; org_id: stri
 export type EventRow = { id: string; org_id: string; is_demo: boolean; title: string; event_type: EventType; status: EventStatus; starts_at: Ts | null; ends_at: Ts | null; venue: string | null; area: string | null; guest_target: number; budget_zmw: number | null; brief: string | null; current_revision_id: string | null; created_by: string | null; created_at: Ts; updated_at: Ts }
 export type EventVendorRow = { id: string; event_id: string; org_id: string; vendor_id: string; service: VendorCategory; status: BookingStatus; quoted_zmw: number | null; notes: string | null; created_at: Ts; updated_at: Ts }
 export type MenuItemRow = { id: string; event_id: string; org_id: string; vendor_id: string | null; name: string; category: MenuCategory; quantity: number; unit: string; per_guest: number | null; unit_cost_zmw: number | null; total_cost_zmw: number; notes: string | null; sort_order: number; created_at: Ts; updated_at: Ts }
-export type GuestRow = { id: string; event_id: string; org_id: string; full_name: string; phone: string | null; rsvp_status: RsvpStatus; party_size: number; guest_group: string | null; dietary_notes: string | null; checked_in_at: Ts | null; created_at: Ts; updated_at: Ts }
-export type PaymentRow = { id: string; event_id: string; org_id: string; vendor_id: string | null; purpose: PaymentPurpose; amount_zmw: number; currency: 'ZMW'; status: PaymentStatus; provider: string; provider_ref: string | null; payer_phone: string | null; payer_network: string | null; raw_payload: Json | null; paid_at: Ts | null; created_by: string | null; created_at: Ts; updated_at: Ts }
+export type GuestRow = { id: string; event_id: string; org_id: string; gift_pledge_zmw: number | null; full_name: string; phone: string | null; rsvp_status: RsvpStatus; party_size: number; guest_group: string | null; dietary_notes: string | null; checked_in_at: Ts | null; created_at: Ts; updated_at: Ts }
+export type PaymentRow = { id: string; event_id: string; org_id: string; receipt_id: string | null; invoice_number: string | null; vendor_id: string | null; purpose: PaymentPurpose; amount_zmw: number; currency: 'ZMW'; status: PaymentStatus; provider: string; provider_ref: string | null; payer_phone: string | null; payer_network: string | null; raw_payload: Json | null; paid_at: Ts | null; created_by: string | null; created_at: Ts; updated_at: Ts }
 export type PlanRevisionRow = { id: string; event_id: string; org_id: string; revision_no: number; kind: RevisionKind; instruction: string | null; plan: Json; guest_count: number | null; total_zmw: number | null; model: string | null; created_by: string | null; created_at: Ts; updated_at: Ts }
 export type AgentBridgeStatus = 'pending' | 'accepted' | 'countered' | 'declined' | 'applied' | 'info'
 export type AgentBridgeRow = { id: string; event_id: string; from_agent: string; to_agent: string; action_type: string; message: string | null; payload_json: Json; status: AgentBridgeStatus; created_at: Ts }
+export type DispatchLogRow = { id: string; event_id: string; guest_id: string | null; channel: 'sms' | 'whatsapp'; provider: string; to_phone: string | null; to_name: string | null; message: string; status: 'queued' | 'sent' | 'failed'; simulated: boolean; created_at: Ts; sent_at: Ts | null }
+export type AuditTrailRow = { id: string; event_id: string; actor: string; rule: string | null; action: string; detail: Json; created_at: Ts }
 export type EventHeadcountRow = { event_id: string; org_id: string; guest_target: number; confirmed: number; maybe: number; pending: number; declined: number; invited_total: number }
 
 export type Database = {
@@ -50,6 +52,8 @@ export type Database = {
       guests: Table<GuestRow, 'event_id' | 'full_name'>
       payments: Table<PaymentRow, 'event_id' | 'amount_zmw'>
       plan_revisions: Table<PlanRevisionRow, 'event_id' | 'plan'>
+      dispatch_log: Table<DispatchLogRow, 'event_id' | 'message'>
+      audit_trail: Table<AuditTrailRow, 'event_id' | 'action'>
       agent_bridge: Table<AgentBridgeRow, 'event_id' | 'from_agent' | 'to_agent' | 'action_type'>
     }
     Views: {
@@ -59,6 +63,8 @@ export type Database = {
       is_org_member: { Args: { p_org_id: string }; Returns: boolean }
       has_org_role: { Args: { p_org_id: string; p_roles: MemberRole[] }; Returns: boolean }
       is_event_vendor: { Args: { p_event_id: string }; Returns: boolean }
+      vendor_view: { Args: { p_vendor_ref?: string }; Returns: Json }
+      demo_action: { Args: { p_key: string; p_action: string; p_args?: Json }; Returns: Json }
       is_demo_event: { Args: { p_event_id: string }; Returns: boolean }
       bridge_list: { Args: { p_key: string; p_event_id?: string | null }; Returns: Json }
       bridge_post: { Args: { p_key: string; p_from_agent: string; p_to_agent: string; p_action_type: string; p_message?: string | null; p_payload?: Json; p_event_id?: string | null }; Returns: Json }

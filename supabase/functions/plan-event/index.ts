@@ -11,7 +11,7 @@
 // (data: {...choices[0].delta.content...}), and then one extra event is sent:
 //   event: kpos.saved   data: {"revision_id": "...", "revision_no": 2} | {"error": "..."}
 //
-// Secrets: XAI_API_KEY (required), XAI_MODEL (default grok-4.7), XAI_STRICT_SCHEMA ("true" to send json_schema),
+// Secrets: XAI_API_KEY (required), XAI_MODEL (default grok-4.20-0309-non-reasoning), XAI_STRICT_SCHEMA ("true" to send json_schema),
 //          XAI_API_URL (optional override, e.g. a local mock for tests)
 // SUPABASE_URL / SUPABASE_ANON_KEY are injected by Supabase automatically.
 
@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
 
   const apiKey = Deno.env.get('XAI_API_KEY')
   if (!apiKey) return json({ error: 'XAI_API_KEY is not set (supabase secrets set XAI_API_KEY=...)' }, 500)
-  const model = Deno.env.get('XAI_MODEL') ?? 'grok-4.7'
+  const model = Deno.env.get('XAI_MODEL') ?? 'grok-4.20-0309-non-reasoning'
   const strict = Deno.env.get('XAI_STRICT_SCHEMA') === 'true'
 
   let body: Body
