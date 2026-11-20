@@ -1,0 +1,12 @@
+# Minimal Supabase CLI config. Run `supabase init` / `supabase link` to merge with full defaults if needed.
+project_id = "kitchen-party-os"
+
+[db.seed]
+enabled = true
+sql_paths = ["./seed.sql"]
+
+[functions.plan-event]
+verify_jwt = true
+
+[functions.elicate-webhook]
+verify_jwt = false
