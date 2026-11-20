@@ -1,6 +1,17 @@
 import { useEffect, useRef, useState } from 'react'
 import { Card, Badge } from './ui'
 import { isOffline } from '../lib/supabase'
+import { CalendarClock, MapPin, PartyPopper, UtensilsCrossed, Users, Wallet, type LucideIcon } from 'lucide-react'
+import type { EventFields } from '../lib/eventFields'
+
+const FIELD_DEFS: { key: keyof EventFields; label: string; icon: LucideIcon; type: 'text' | 'number'; min?: number }[] = [
+  { key: 'title', label: 'Event / owner name', icon: PartyPopper, type: 'text' },
+  { key: 'location', label: 'Location', icon: MapPin, type: 'text' },
+  { key: 'dateTime', label: 'Date & time', icon: CalendarClock, type: 'text' },
+  { key: 'guests', label: 'Guests', icon: Users, type: 'number', min: 1 },
+  { key: 'budget', label: 'Budget ZMW', icon: Wallet, type: 'number', min: 0 },
+  { key: 'food', label: 'Food / menu', icon: UtensilsCrossed, type: 'text' },
+]
 
 const SECTIONS = ['event', 'menu', 'run_of_show', 'cost_breakdown', 'vendor_assignments', 'assumptions'] as const
 
@@ -13,9 +24,11 @@ type Props = {
   source: 'grok' | 'offline' | null
   onGenerate: (brief: string) => void
   onRevise: (change: string) => void
+  fields: EventFields
+  onFieldsChange: (f: EventFields) => void
 }
 
-export function BriefPanel({ brief, onBriefChange: setBrief, streaming, streamText, error, source, onGenerate, onRevise }: Props) {
+export function BriefPanel({ brief, onBriefChange: setBrief, streaming, streamText, error, source, onGenerate, onRevise, fields, onFieldsChange }: Props) {
   const [change, setChange] = useState('')
   const pre = useRef<HTMLPreElement>(null)
   useEffect(() => { if (pre.current) pre.current.scrollTop = pre.current.scrollHeight }, [streamText])
@@ -23,6 +36,23 @@ export function BriefPanel({ brief, onBriefChange: setBrief, streaming, streamTe
   return (
     <div className="flex flex-col gap-5">
       <Card title="Event brief" right={source && <Badge tone={source === 'grok' ? 'blue' : 'stone'}>{source === 'grok' ? 'Grok · live' : 'Offline planner'}</Badge>}>
+        <div className="mb-3 grid grid-cols-3 gap-1.5" data-testid="event-fields">
+          {FIELD_DEFS.map(({ key, label, icon: Icon, type, min }) => (
+            <label key={key} className="group relative block min-w-0" title={label}>
+              <span className="mb-0.5 block truncate text-[9px] font-semibold uppercase tracking-wider text-zinc-500">{label}</span>
+              <Icon className="pointer-events-none absolute bottom-[7px] left-2 h-3.5 w-3.5 text-zinc-500 group-focus-within:text-orange-400" />
+              <input
+                name={key}
+                aria-label={label}
+                type={type}
+                min={min}
+                value={fields[key]}
+                onChange={(e) => onFieldsChange({ ...fields, [key]: type === 'number' ? Math.max(min ?? 0, Number(e.target.value) || 0) : e.target.value })}
+                className="w-full min-w-0 rounded-lg border border-zinc-800 bg-zinc-800/60 py-1.5 pl-7 pr-1.5 text-[11px] text-zinc-100 outline-none focus:border-orange-400"
+              />
+            </label>
+          ))}
+        </div>
         <textarea
           value={brief}
           onChange={(e) => setBrief(e.target.value)}

@@ -5,6 +5,7 @@ import type { Plan } from '../types/plan'
 import { mockPlan } from '../mock/demo'
 import { DEMO } from '../mock/demo-data'
 import { parseHeadcountDelta, reviseHeadcount } from './revise'
+import { buildOfflinePlan, grokEventPayload, isDefaultFields, type EventFields } from './eventFields'
 
 export type StreamCallbacks = {
   onToken: (text: string) => void
@@ -13,7 +14,7 @@ export type StreamCallbacks = {
 }
 
 export type PlanRequest =
-  | { kind: 'initial'; brief: string; eventId?: string }
+  | { kind: 'initial'; brief: string; eventId?: string; fields?: EventFields }
   | { kind: 'revision'; change: string; previousPlan: Plan; eventId?: string }
 
 const vendorsPayload = () => DEMO.vendors.map((v) => ({ vendor_ref: v.org.slug, name: v.org.name, category: v.category, catalog: v.catalog }))
@@ -21,7 +22,7 @@ const FIRST_TOKEN_MS = 8000
 
 export async function streamPlan(req: PlanRequest, cb: StreamCallbacks, signal?: AbortSignal): Promise<void> {
   const body = req.kind === 'initial'
-    ? { brief: req.brief, vendors: vendorsPayload() }
+    ? { brief: req.brief, vendors: vendorsPayload(), ...(req.fields ? { event: grokEventPayload(req.fields) } : {}) }
     : { change: req.change, previous_plan: req.previousPlan, vendors: vendorsPayload() }
 
   const ctrl = new AbortController()
@@ -68,16 +69,17 @@ export async function streamPlan(req: PlanRequest, cb: StreamCallbacks, signal?:
 
 async function simulate(req: PlanRequest, cb: StreamCallbacks, signal?: AbortSignal) {
   let plan: Plan
-  if (req.kind === 'initial') plan = mockPlan
+  if (req.kind === 'initial') plan = req.fields && !isDefaultFields(req.fields) ? buildOfflinePlan(req.fields) : mockPlan
   else {
     const delta = parseHeadcountDelta(req.change)
     if (delta == null) return cb.onError('Offline planner understands headcount changes like "15 extra guests". Grok handles free-form edits when its key is set.')
     plan = reviseHeadcount(req.previousPlan, delta)
   }
   const text = JSON.stringify(plan, null, 2)
-  for (let i = 0; i < text.length; i += 64) {
+  const step = Math.max(64, Math.ceil(text.length / 60)) // whole stream < ~0.6s
+  for (let i = 0; i < text.length; i += step) {
     if (signal?.aborted) return
-    cb.onToken(text.slice(0, i + 64))
+    cb.onToken(text.slice(0, i + step))
     await new Promise((r) => setTimeout(r, 8))
   }
   cb.onDone(plan, { source: 'offline' })
