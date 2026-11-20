@@ -2,29 +2,40 @@ import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import type { AgentBridgeRow } from '../types/database'
 
-const BRIDGE_KEY = (import.meta.env.VITE_BRIDGE_KEY as string | undefined) ?? 'lusaka2026' // demo key (owner's choice)
+import { sendBridge } from '../lib/api'
 const PEOPLE: Record<string, string> = { HostBot: 'Emmanuel', WoodlandsCatererBot: 'Anna' }
 const time = (iso: string) =>
   new Intl.DateTimeFormat('en-GB', { timeZone: 'Africa/Lusaka', hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(new Date(iso)) + ' CAT'
 const zmw = (n: unknown) => (typeof n === 'number' || typeof n === 'string') && n !== '' ? `ZMW ${Number(n).toLocaleString('en-ZM')}` : null
 
-async function post(body: Record<string, unknown>) {
-  const res = await fetch('/api/bridge', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-bridge-key': BRIDGE_KEY },
-    body: JSON.stringify(body),
-  })
-  const data = await res.json().catch(() => ({}))
-  if (!res.ok) throw new Error(data?.error === 'validation_failed' ? data.details.join('; ') : (data?.error ?? `HTTP ${res.status}`))
-  return data as { row: AgentBridgeRow; applied: Record<string, unknown> | null }
-}
+const post = (body: Record<string, unknown>) => sendBridge(body as never)
 
-export function NegotiationFeed({ eventId, onApplied }: { eventId: string; onApplied?: (guestCount: number) => void }) {
+export function NegotiationFeed({ eventId, onApplied, reloadKey, onRows }: { eventId: string; onApplied?: (guestCount: number) => void; reloadKey?: number; onRows?: (rows: AgentBridgeRow[]) => void }) {
   const [rows, setRows] = useState<AgentBridgeRow[]>([])
   const [busy, setBusy] = useState<string | null>(null)
   const [counterFor, setCounterFor] = useState<string | null>(null)
   const [counter, setCounter] = useState('')
   const [err, setErr] = useState<string | null>(null)
+
+  useEffect(() => { onRows?.(rows) }, [rows, onRows])
+
+  // Offline: rows broadcast in-page by sendBridge(); a local accept also marks the quote and re-plans.
+  useEffect(() => {
+    if (supabase) return
+    const h = (e: Event) => {
+      const row = (e as CustomEvent).detail as AgentBridgeRow
+      setRows((prev) => {
+        let next = [row, ...prev]
+        const qid = (row.payload_json as Record<string, unknown>)?.quote_id
+        if (qid && (row.action_type === 'quote_accepted' || row.action_type === 'counter_offer')) next = next.map((r) => (r.id === qid ? { ...r, status: row.action_type === 'quote_accepted' ? 'accepted' : 'countered' } : r))
+        return next
+      })
+      if (row.action_type === 'quote_accepted') { const g = Number((row.payload_json as Record<string, unknown>)?.guest_count); if (g > 0) onApplied?.(g) }
+    }
+    window.addEventListener('kpos-bridge-local', h)
+    return () => window.removeEventListener('kpos-bridge-local', h)
+  }, [onApplied, reloadKey])
+  useEffect(() => { if (!supabase) setRows([]) }, [reloadKey])
 
   useEffect(() => {
     if (!supabase) return
@@ -33,6 +44,7 @@ export function NegotiationFeed({ eventId, onApplied }: { eventId: string; onApp
       .then(({ data }) => data && setRows(data))
     const ch = sb.channel(`bridge-${eventId}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'agent_bridge', filter: `event_id=eq.${eventId}` }, (msg) => {
+        if (msg.eventType === 'DELETE') { const id = (msg.old as AgentBridgeRow)?.id; setRows((prev) => prev.filter((r) => r.id !== id)); return }
         const row = msg.new as AgentBridgeRow
         if (!row?.id) return
         setRows((prev) => prev.some((r) => r.id === row.id) ? prev.map((r) => (r.id === row.id ? row : r)) : [row, ...prev])
@@ -43,7 +55,7 @@ export function NegotiationFeed({ eventId, onApplied }: { eventId: string; onApp
       })
       .subscribe()
     return () => { void sb.removeChannel(ch) }
-  }, [eventId, onApplied])
+  }, [eventId, onApplied, reloadKey])
 
   const sorted = useMemo(() => [...rows].sort((a, b) => b.created_at.localeCompare(a.created_at)), [rows])
 
@@ -56,9 +68,9 @@ export function NegotiationFeed({ eventId, onApplied }: { eventId: string; onApp
     <section className="rounded-2xl border border-zinc-800 bg-zinc-950 p-5 text-zinc-100 shadow-lg">
       <header className="mb-4 flex items-center justify-between">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-400">Agent-to-Agent Negotiation Feed</h2>
-        <span className="flex items-center gap-2 text-xs text-emerald-400"><span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />{supabase ? 'live' : 'offline'}</span>
+        <span className="flex items-center gap-2 text-xs text-emerald-400"><span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />{supabase ? 'live · realtime' : 'offline'}</span>
       </header>
-      {!supabase && <p className="text-sm text-zinc-500">Connect Supabase to see the live agent feed.</p>}
+      {!supabase && rows.length === 0 && <p className="text-sm text-zinc-500">Offline mode: use the Demo Mode bar to simulate agents.</p>}
       {err && <p className="mb-3 rounded-lg bg-rose-950 p-2 text-xs text-rose-300">{err}</p>}
       <ul className="max-h-[28rem] space-y-3 overflow-auto pr-1">
         {sorted.map((r) => {
@@ -101,7 +113,7 @@ export function NegotiationFeed({ eventId, onApplied }: { eventId: string; onApp
             </li>
           )
         })}
-        {supabase && sorted.length === 0 && <li className="text-sm text-zinc-500">No agent messages yet.</li>}
+        {sorted.length === 0 && supabase && <li className="text-sm text-zinc-500">No agent messages yet.</li>}
       </ul>
     </section>
   )
