@@ -14,23 +14,23 @@ export function RsvpCounter({ headcount, target, guests, pulse, onSimulate, onSe
   return (
     <Card title="Live RSVPs" right={<button onClick={onSimulate} className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700">+ Simulate RSVP</button>}>
       <div className="flex items-end gap-3">
-        <span className={`text-5xl font-black tabular-nums text-stone-900 transition ${pulse ? 'scale-110 text-emerald-600' : ''}`}>{headcount.confirmed}</span>
-        <span className="pb-1.5 text-stone-500">/ {target} confirmed</span>
+        <span className={`text-5xl font-black tabular-nums text-zinc-50 transition ${pulse ? 'scale-110 text-emerald-600' : ''}`}>{headcount.confirmed}</span>
+        <span className="pb-1.5 text-zinc-400">/ {target} confirmed</span>
       </div>
-      <div className="mt-3 h-3 overflow-hidden rounded-full bg-stone-200">
+      <div className="mt-3 h-3 overflow-hidden rounded-full bg-zinc-800">
         <div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-lime-400 transition-all duration-700" style={{ width: `${pct}%` }} />
       </div>
       <div className="mt-3 grid grid-cols-4 gap-2 text-center text-xs">
         {([['Maybe', headcount.maybe], ['Pending', headcount.pending], ['Declined', headcount.declined], ['Invited', headcount.invited]] as const).map(([l, v]) => (
-          <div key={l} className="rounded-lg bg-stone-50 py-2"><p className="font-bold tabular-nums text-stone-800">{v}</p><p className="text-stone-500">{l}</p></div>
+          <div key={l} className="rounded-lg bg-zinc-800/60 py-2"><p className="font-bold tabular-nums text-zinc-100">{v}</p><p className="text-zinc-400">{l}</p></div>
         ))}
       </div>
-      <ul className="mt-4 divide-y divide-stone-100">
+      <ul className="mt-4 divide-y divide-zinc-800">
         {recent.map((g) => (
           <li key={g.id} className="flex items-center justify-between gap-2 py-2 text-sm">
             <div className="min-w-0">
-              <p className="truncate font-medium text-stone-800">{g.full_name} {g.party_size > 1 && <span className="text-stone-400">+{g.party_size - 1}</span>}</p>
-              <p className="text-xs text-stone-400">{formatPhone(g.phone)} · {g.guest_group}</p>
+              <p className="truncate font-medium text-zinc-100">{g.full_name} {g.party_size > 1 && <span className="text-zinc-500">+{g.party_size - 1}</span>}</p>
+              <p className="text-xs text-zinc-500">{formatPhone(g.phone)} · {g.guest_group}</p>
             </div>
             <button onClick={() => onSetRsvp(g.id, g.rsvp_status === 'confirmed' ? 'declined' : 'confirmed')} title="Toggle RSVP">
               <Badge tone={tone[g.rsvp_status]}>{g.rsvp_status}</Badge>
@@ -38,7 +38,7 @@ export function RsvpCounter({ headcount, target, guests, pulse, onSimulate, onSe
           </li>
         ))}
       </ul>
-      <p className="mt-2 text-xs text-stone-400">{headcount.rows} invitations · {headcount.invited} people incl. +1s</p>
+      <p className="mt-2 text-xs text-zinc-500">{headcount.rows} invitations · {headcount.invited} people incl. +1s</p>
     </Card>
   )
 }
