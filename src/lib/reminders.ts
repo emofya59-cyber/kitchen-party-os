@@ -16,4 +16,4 @@ export function reminderText(g: Pick<GuestRow, 'full_name' | 'rsvp_status'>, ev:
 }
 
 export const waLink = (phone: string | null, text: string) =>
-  phone ? `https://wa.me/${phone.replace(/^\+/, '')}?text=${encodeURIComponent(text)}` : '#'
+  phone ? `https://wa.me/${phone.replace(/\D/g, '')}?text=${encodeURIComponent(text)}` : '#'
