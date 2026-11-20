@@ -2,10 +2,10 @@ import type { ReactNode } from 'react'
 
 export function Card({ title, right, children, className = '' }: { title?: ReactNode; right?: ReactNode; children: ReactNode; className?: string }) {
   return (
-    <section className={`rounded-2xl border border-stone-200 bg-white/90 p-5 shadow-sm backdrop-blur ${className}`}>
+    <section className={`rounded-2xl border border-zinc-800 bg-zinc-900/80 p-5 shadow-sm backdrop-blur ${className}`}>
       {(title || right) && (
         <header className="mb-4 flex items-center justify-between gap-3">
-          {title && <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">{title}</h2>}
+          {title && <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-400">{title}</h2>}
           {right}
         </header>
       )}
@@ -16,9 +16,9 @@ export function Card({ title, right, children, className = '' }: { title?: React
 
 const tones = {
   green: 'bg-emerald-100 text-emerald-800 ring-emerald-200',
-  amber: 'bg-amber-100 text-amber-800 ring-amber-200',
+  amber: 'bg-amber-100 text-amber-300 ring-amber-200',
   red: 'bg-rose-100 text-rose-800 ring-rose-200',
-  stone: 'bg-stone-100 text-stone-700 ring-stone-200',
+  stone: 'bg-stone-100 text-zinc-200 ring-stone-200',
   blue: 'bg-sky-100 text-sky-800 ring-sky-200',
 } as const
 

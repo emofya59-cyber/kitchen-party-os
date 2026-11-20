@@ -21,20 +21,20 @@ export function VendorsPanel({ vendors, plan, payments, offline, onSimulatePaid 
           const a = plan.vendor_assignments.find((x) => x.vendor_ref === v.slug)
           const vp = payments.filter((p) => p.vendor_id === v.id)
           return (
-            <li key={v.id} className="rounded-xl border border-stone-100 bg-stone-50/60 p-3">
+            <li key={v.id} className="rounded-xl border border-zinc-800 bg-zinc-800/40 p-3">
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <p className="font-semibold text-stone-800">{v.display_name} <span className="text-xs font-normal text-stone-400">★ {v.rating} · {v.area}</span></p>
-                  <p className="text-xs text-stone-500">{v.category.replace('_', ' & ')} · {formatPhone(v.whatsapp)}</p>
+                  <p className="font-semibold text-zinc-100">{v.display_name} <span className="text-xs font-normal text-zinc-500">★ {v.rating} · {v.area}</span></p>
+                  <p className="text-xs text-zinc-400">{v.category.replace('_', ' & ')} · {formatPhone(v.whatsapp)}</p>
                 </div>
                 <Badge tone={bookingTone[v.booking?.status ?? 'proposed']}>{v.booking?.status ?? 'not booked'}</Badge>
               </div>
               {a && (
-                <p className="mt-2 text-xs text-stone-600">{a.scope}. Est. <b>{formatZMWLong(a.estimated_zmw)}</b>, deposit {a.deposit_pct}% = <b>{formatZMWLong(a.deposit_zmw)}</b></p>
+                <p className="mt-2 text-xs text-zinc-300">{a.scope}. Est. <b>{formatZMWLong(a.estimated_zmw)}</b>, deposit {a.deposit_pct}% = <b>{formatZMWLong(a.deposit_zmw)}</b></p>
               )}
               {vp.map((p) => (
-                <div key={p.id} className="mt-2 flex items-center justify-between rounded-lg bg-white px-2.5 py-1.5 text-xs">
-                  <span className="text-stone-600">Elicate Pay · {formatZMWLong(p.amount_zmw)} · {p.payer_network?.toUpperCase()} {p.paid_at ? `· ${formatCAT(p.paid_at)}` : ''}</span>
+                <div key={p.id} className="mt-2 flex items-center justify-between rounded-lg bg-zinc-900 px-2.5 py-1.5 text-xs">
+                  <span className="text-zinc-300">Elicate Pay · {formatZMWLong(p.amount_zmw)} · {p.payer_network?.toUpperCase()} {p.paid_at ? `· ${formatCAT(p.paid_at)}` : ''}</span>
                   <span className="flex items-center gap-2">
                     <Badge tone={payTone[p.status]}>{p.status}</Badge>
                     {offline && p.status === 'pending' && (
