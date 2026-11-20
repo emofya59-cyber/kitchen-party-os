@@ -1,14 +1,14 @@
-// Streams a plan from the plan-event edge function (SSE passthrough of xAI chat
-// completions), or simulates streaming from mock data when offline.
+// Streams a plan from the same-origin Pages Function /api/plan (Grok SSE passthrough;
+// key lives only in Pages secrets). Any error, missing key, or >8s without a first
+// token falls back to the deterministic offline planner, so the demo never stalls.
 import type { Plan } from '../types/plan'
-import { functionsUrl, supabase, supabaseAnonKey } from './supabase'
 import { mockPlan } from '../mock/demo'
 import { DEMO } from '../mock/demo-data'
 import { parseHeadcountDelta, reviseHeadcount } from './revise'
 
 export type StreamCallbacks = {
   onToken: (text: string) => void
-  onDone: (plan: Plan, meta: { source: 'grok' | 'offline'; saved?: unknown }) => void
+  onDone: (plan: Plan, meta: { source: 'grok' | 'offline' }) => void
   onError: (message: string) => void
 }
 
@@ -16,88 +16,81 @@ export type PlanRequest =
   | { kind: 'initial'; brief: string; eventId?: string }
   | { kind: 'revision'; change: string; previousPlan: Plan; eventId?: string }
 
+const vendorsPayload = () => DEMO.vendors.map((v) => ({ vendor_ref: v.org.slug, name: v.org.name, category: v.category, catalog: v.catalog }))
+const FIRST_TOKEN_MS = 8000
+
 export async function streamPlan(req: PlanRequest, cb: StreamCallbacks, signal?: AbortSignal): Promise<void> {
-  if (!functionsUrl || !supabase) return simulate(req, cb, signal)
+  const body = req.kind === 'initial'
+    ? { brief: req.brief, vendors: vendorsPayload() }
+    : { change: req.change, previous_plan: req.previousPlan, vendors: vendorsPayload() }
 
-  const { data } = await supabase.auth.getSession()
-  const token = data.session?.access_token ?? supabaseAnonKey
-  // When signed in with an event_id, the function loads event + vendor catalog itself (under RLS).
-  // Otherwise we send the demo catalog so Grok still prices from known vendors.
-  const vendors = DEMO.vendors.map((v) => ({ vendor_ref: v.org.slug, name: v.org.name, category: v.category, catalog: v.catalog }))
-  const eventId = data.session ? req.eventId : undefined
-  const body =
-    req.kind === 'initial'
-      ? { event_id: eventId, brief: req.brief, vendors }
-      : { event_id: eventId, change: req.change, previous_plan: req.previousPlan, vendors }
-
-  let res: Response
-  try {
-    res = await fetch(`${functionsUrl}/plan-event`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, apikey: supabaseAnonKey ?? '' },
-      body: JSON.stringify(body),
-      signal,
-    })
-  } catch {
-    return simulate(req, cb, signal) // edge function unreachable → offline planner keeps the demo alive
-  }
-  // Not deployed yet (404) or XAI_API_KEY missing (500): fall back to the offline planner.
-  if (res.status === 404 || res.status === 500 || res.status === 401) return simulate(req, cb, signal)
-  if (!res.ok || !res.body) return cb.onError(`plan-event failed (${res.status}): ${await res.text().catch(() => '')}`)
-
-  const reader = res.body.getReader()
-  const decoder = new TextDecoder()
-  let buf = ''
+  const ctrl = new AbortController()
+  signal?.addEventListener('abort', () => ctrl.abort())
+  let timer = setTimeout(() => ctrl.abort(), FIRST_TOKEN_MS)
   let content = ''
-  let saved: unknown
-  let eventName = 'message'
-  while (true) {
-    const { done, value } = await reader.read()
-    if (done) break
-    buf += decoder.decode(value, { stream: true })
-    const lines = buf.split('\n')
-    buf = lines.pop() ?? ''
-    for (const raw of lines) {
-      const line = raw.trim()
-      if (line === '') { eventName = 'message'; continue }
-      if (line.startsWith('event:')) { eventName = line.slice(6).trim(); continue }
-      if (!line.startsWith('data:')) continue
-      const payload = line.slice(5).trim()
-      if (payload === '[DONE]') continue
-      try {
-        const obj = JSON.parse(payload)
-        if (eventName === 'kpos.saved') saved = obj
-        else if (eventName === 'kpos.error') return cb.onError(obj.error ?? 'stream error')
-        else {
-          const delta: string = obj.choices?.[0]?.delta?.content ?? ''
-          if (delta) { content += delta; cb.onToken(content) }
-        }
-      } catch { /* ignore partial line */ }
-    }
-  }
   try {
-    cb.onDone(JSON.parse(stripFences(content)) as Plan, { source: 'grok', saved })
+    const res = await fetch('/api/plan', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal: ctrl.signal })
+    if (!res.ok || !res.body || !(res.headers.get('content-type') ?? '').includes('text/event-stream')) throw new Error(`plan ${res.status}`)
+    const reader = res.body.getReader()
+    const decoder = new TextDecoder()
+    let buf = ''
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      buf += decoder.decode(value, { stream: true })
+      const lines = buf.split('\n')
+      buf = lines.pop() ?? ''
+      for (const raw of lines) {
+        const line = raw.trim()
+        if (!line.startsWith('data:')) continue
+        const payload = line.slice(5).trim()
+        if (payload === '[DONE]') continue
+        try {
+          const delta: string = JSON.parse(payload).choices?.[0]?.delta?.content ?? ''
+          if (delta) {
+            content += delta
+            clearTimeout(timer); timer = setTimeout(() => ctrl.abort(), 15000) // stall guard after first token
+            cb.onToken(content)
+          }
+        } catch { /* partial */ }
+      }
+    }
+    clearTimeout(timer)
+    const plan = JSON.parse(content.trim().replace(/^```(?:json)?\s*/i, '').replace(/```$/, '')) as Plan
+    if (!plan?.cost_breakdown || !Array.isArray(plan.menu) || !Array.isArray(plan.cost_breakdown.line_items) || !Array.isArray(plan.run_of_show)) throw new Error('invalid plan shape')
+    cb.onDone(plan, { source: 'grok' })
   } catch {
-    cb.onError('Grok returned non-JSON output. Check the raw stream panel.')
+    clearTimeout(timer)
+    if (signal?.aborted) return
+    return simulate(req, cb, signal)
   }
 }
-
-const stripFences = (s: string) => s.trim().replace(/^```(?:json)?\s*/i, '').replace(/```$/, '')
 
 async function simulate(req: PlanRequest, cb: StreamCallbacks, signal?: AbortSignal) {
   let plan: Plan
   if (req.kind === 'initial') plan = mockPlan
   else {
     const delta = parseHeadcountDelta(req.change)
-    if (delta == null) return cb.onError('Offline demo understands headcount changes like "15 extra guests". Connect Grok for free-form edits.')
+    if (delta == null) return cb.onError('Offline planner understands headcount changes like "15 extra guests". Grok handles free-form edits when its key is set.')
     plan = reviseHeadcount(req.previousPlan, delta)
   }
   const text = JSON.stringify(plan, null, 2)
-  const chunk = 48
-  for (let i = 0; i < text.length; i += chunk) {
+  for (let i = 0; i < text.length; i += 64) {
     if (signal?.aborted) return
-    cb.onToken(text.slice(0, i + chunk))
-    await new Promise((r) => setTimeout(r, 12))
+    cb.onToken(text.slice(0, i + 64))
+    await new Promise((r) => setTimeout(r, 8))
   }
   cb.onDone(plan, { source: 'offline' })
+}
+
+/** Grok-written reminder (non-streaming). Returns null when Grok is unavailable → caller uses templates. */
+export async function generateReminderWithGrok(ev: { title: string; when: string; venue: string }, lang: 'en' | 'bem'): Promise<string | null> {
+  const ctrl = new AbortController()
+  const t = setTimeout(() => ctrl.abort(), 8000)
+  try {
+    const res = await fetch('/api/plan', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: 'reminder', event: ev, lang }), signal: ctrl.signal })
+    if (!res.ok) return null
+    const data = await res.json()
+    return typeof data?.text === 'string' && data.text.includes('{name}') ? data.text : null
+  } catch { return null } finally { clearTimeout(t) }
 }

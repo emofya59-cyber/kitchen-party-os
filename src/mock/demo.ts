@@ -35,6 +35,7 @@ export const mockVendors: VendorWithOrg[] = DEMO.vendors.map((v) => {
 
 export const mockGuests: GuestRow[] = DEMO.guests.map((g) => ({
   ...g, rsvp_status: g.rsvp_status as GuestRow['rsvp_status'], event_id: DEMO.event.id, org_id: DEMO.hostOrg.id,
+  gift_pledge_zmw: Number(g.id.slice(-12)) % 3 === 0 ? null : [100, 150, 200, 250, 300, 500][Number(g.id.slice(-12)) % 6],
   dietary_notes: null, checked_in_at: null, ...ts,
 }))
 
@@ -42,6 +43,6 @@ const vendorIdBySlug = Object.fromEntries(DEMO.vendors.map((v) => [v.org.slug, v
 export const mockPayments: PaymentRow[] = DEMO.payments.map((p) => ({
   id: p.id, event_id: DEMO.event.id, org_id: DEMO.hostOrg.id, vendor_id: vendorIdBySlug[p.vendor_ref], purpose: 'deposit',
   amount_zmw: p.amount_zmw, currency: 'ZMW', status: p.status as PaymentRow['status'], provider: 'elicate_pay',
-  provider_ref: p.provider_ref, payer_phone: p.payer_phone, payer_network: p.payer_network, raw_payload: null,
+  receipt_id: p.status === 'succeeded' ? 'EP-LSK-7Q2M4K' : null, invoice_number: null, provider_ref: p.provider_ref, payer_phone: p.payer_phone, payer_network: p.payer_network, raw_payload: null,
   paid_at: p.paid_at, created_by: DEMO.users[0].id, ...ts,
 }))
