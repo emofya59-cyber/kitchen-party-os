@@ -50,7 +50,7 @@ export function OpsAgent({ plan, vendors, payments, guests, audit, live, ev, onL
     if (unconfirmed.length || pendingQuote) {
       out.push({ id: 'vendors', severity: 'med', title: `${unconfirmed.length} unconfirmed vendor${unconfirmed.length === 1 ? '' : 's'}${pendingQuote ? ' · caterer quote awaiting reply' : ''}`, detail: [...unconfirmed.map((v) => `${v.display_name} (${v.booking?.status})`), pendingQuote ? 'WoodlandsCatererBot quote pending' : ''].filter(Boolean).join(' · '), actionLabel: 'Nudge via agent bridge',
         run: async () => {
-          if (live) await bridgePost({ from_agent: 'HostBot', to_agent: 'WoodlandsCatererBot', action_type: 'message', message: `OpsAgent reminder: event is ${ev.when}. Please confirm delivery times for ${plan.event.guest_count} guests and keep your quote current.`, payload_json: { reminder: true, guest_count: plan.event.guest_count, unconfirmed: unconfirmed.map((v) => v.slug) } })
+          if (live) await bridgePost({ from_agent: 'HostBot', to_agent: 'WoodlandsCatererBot', action_type: 'message', message: `OpsAgent reminder: ${ev.title} (${ev.venue}) is ${ev.when}. Please confirm delivery times for ${plan.event.guest_count} guests and keep your quote current.`, payload_json: { reminder: true, guest_count: plan.event.guest_count, unconfirmed: unconfirmed.map((v) => v.slug) } })
           await log('unconfirmed_vendors', 'bridge_reminder_posted', { vendors: unconfirmed.map((v) => v.slug), to: 'WoodlandsCatererBot' })
           return 'Reminder posted to WoodlandsCatererBot'
         } })

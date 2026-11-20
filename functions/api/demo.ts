@@ -3,7 +3,7 @@
 interface Env { SUPABASE_URL: string; SUPABASE_SERVICE_ROLE_KEY?: string; SUPABASE_ANON_KEY?: string; BRIDGE_KEY?: string }
 const CORS = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Access-Control-Allow-Headers': '*' }
 const json = (b: unknown, s = 200) => new Response(JSON.stringify(b), { status: s, headers: { ...CORS, 'Content-Type': 'application/json' } })
-const ACTIONS = new Set(['pay_deposit', 'request_deposit', 'dispatch', 'dispatch_flush', 'audit', 'set_rsvp', 'reset'])
+const ACTIONS = new Set(['pay_deposit', 'request_deposit', 'dispatch', 'dispatch_flush', 'audit', 'set_rsvp', 'reset', 'custom_event', 'seed_event'])
 
 export const onRequest = async ({ request, env }: { request: Request; env: Env }): Promise<Response> => {
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS })
