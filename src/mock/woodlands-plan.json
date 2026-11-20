@@ -1,0 +1,294 @@
+{
+  "version": "1.0",
+  "price_basis": "example_estimate",
+  "event": {
+    "title": "Mutale's Kitchen Party",
+    "event_type": "kitchen_party",
+    "date": "2026-12-05",
+    "start_time": "14:00",
+    "end_time": "19:00",
+    "area": "Woodlands",
+    "venue": "Family home, Woodlands, Lusaka",
+    "guest_count": 120,
+    "budget_zmw": 25000
+  },
+  "menu": [
+    {
+      "id": "nshima",
+      "name": "Nshima (white maize)",
+      "category": "staple",
+      "per_guest_qty": 1,
+      "per_guest_unit": "plate",
+      "quantity": 120,
+      "unit": "plate",
+      "unit_cost_zmw": 12,
+      "line_total_zmw": 1440,
+      "vendor_ref": "ba-mwapes-kitchen",
+      "notes": "Roughly 0.2 kg mealie meal per guest; cook in 3 batches."
+    },
+    {
+      "id": "village-chicken",
+      "name": "Village chicken (stewed)",
+      "category": "protein",
+      "per_guest_qty": 1,
+      "per_guest_unit": "portion",
+      "quantity": 120,
+      "unit": "portion",
+      "unit_cost_zmw": 45,
+      "line_total_zmw": 5400,
+      "vendor_ref": "ba-mwapes-kitchen",
+      "notes": "About 1 bird per 6 guests, so ~20 birds."
+    },
+    {
+      "id": "kapenta",
+      "name": "Kapenta with tomato & onion",
+      "category": "relish",
+      "per_guest_qty": 1,
+      "per_guest_unit": "portion",
+      "quantity": 120,
+      "unit": "portion",
+      "unit_cost_zmw": 20,
+      "line_total_zmw": 2400,
+      "vendor_ref": "ba-mwapes-kitchen",
+      "notes": "Siavonga kapenta, ~40 g dried per guest."
+    },
+    {
+      "id": "ifisashi",
+      "name": "Ifisashi (greens in groundnut sauce)",
+      "category": "relish",
+      "per_guest_qty": 1,
+      "per_guest_unit": "portion",
+      "quantity": 120,
+      "unit": "portion",
+      "unit_cost_zmw": 15,
+      "line_total_zmw": 1800,
+      "vendor_ref": "ba-mwapes-kitchen",
+      "notes": "Pumpkin leaves (chibwabwa) or rape; vegetarian option."
+    },
+    {
+      "id": "impwa",
+      "name": "Impwa (garden eggs) with tomato",
+      "category": "vegetable",
+      "per_guest_qty": 1,
+      "per_guest_unit": "portion",
+      "quantity": 120,
+      "unit": "portion",
+      "unit_cost_zmw": 12,
+      "line_total_zmw": 1440,
+      "vendor_ref": "ba-mwapes-kitchen",
+      "notes": null
+    },
+    {
+      "id": "chikanda",
+      "name": "Chikanda (African polony) slices",
+      "category": "snack",
+      "per_guest_qty": 1,
+      "per_guest_unit": "slice",
+      "quantity": 120,
+      "unit": "slice",
+      "unit_cost_zmw": 10,
+      "line_total_zmw": 1200,
+      "vendor_ref": "ba-mwapes-kitchen",
+      "notes": "Served with welcome drinks."
+    },
+    {
+      "id": "drinks",
+      "name": "Soft drinks, Maheu & water",
+      "category": "drink",
+      "per_guest_qty": 1,
+      "per_guest_unit": "set",
+      "quantity": 120,
+      "unit": "set",
+      "unit_cost_zmw": 15,
+      "line_total_zmw": 1800,
+      "vendor_ref": "ba-mwapes-kitchen",
+      "notes": "Two 500 ml drinks per guest."
+    },
+    {
+      "id": "cake",
+      "name": "3-tier celebration cake",
+      "category": "cake",
+      "per_guest_qty": null,
+      "per_guest_unit": null,
+      "quantity": 1,
+      "unit": "cake",
+      "unit_cost_zmw": 2800,
+      "line_total_zmw": 2800,
+      "vendor_ref": "chanda-cakes",
+      "notes": "About 130 slices, so it covers 120 guests with a small buffer."
+    }
+  ],
+  "run_of_show": [
+    {
+      "time": "10:00",
+      "duration_min": 120,
+      "item": "Tent, chairs & decor set-up",
+      "owner": "Roma Tents & Decor",
+      "notes": "Gazebo on the lawn, with chairs facing the bride's seat."
+    },
+    {
+      "time": "12:00",
+      "duration_min": 90,
+      "item": "Catering arrives, cooking starts on site",
+      "owner": "Ba Mwape's Kitchen",
+      "notes": "Charcoal braziers set up behind the house."
+    },
+    {
+      "time": "13:30",
+      "duration_min": 30,
+      "item": "Cake delivery & placement",
+      "owner": "Chanda Cakes & Bakes",
+      "notes": null
+    },
+    {
+      "time": "14:00",
+      "duration_min": 30,
+      "item": "Guests arrive, welcome drinks & chikanda",
+      "owner": "Host family",
+      "notes": "Ushers at the gate with the RSVP list."
+    },
+    {
+      "time": "14:30",
+      "duration_min": 15,
+      "item": "Opening prayer & welcome by the MC (Aunty)",
+      "owner": "Host family",
+      "notes": null
+    },
+    {
+      "time": "14:45",
+      "duration_min": 30,
+      "item": "Bride's entrance (covered), dancing",
+      "owner": "Host family",
+      "notes": null
+    },
+    {
+      "time": "15:15",
+      "duration_min": 60,
+      "item": "Lunch served (buffet): nshima, chicken, relishes",
+      "owner": "Ba Mwape's Kitchen",
+      "notes": "2 serving lines, 60 guests each."
+    },
+    {
+      "time": "16:15",
+      "duration_min": 60,
+      "item": "Advice from the aunties & gift presentation",
+      "owner": "Host family",
+      "notes": null
+    },
+    {
+      "time": "17:15",
+      "duration_min": 30,
+      "item": "Groom's surprise arrival, cake cutting",
+      "owner": "Host family",
+      "notes": null
+    },
+    {
+      "time": "17:45",
+      "duration_min": 75,
+      "item": "Dancing, photos, close",
+      "owner": "Host family",
+      "notes": "Teardown starts at 19:00."
+    }
+  ],
+  "cost_breakdown": {
+    "currency": "ZMW",
+    "line_items": [
+      {
+        "category": "food",
+        "description": "Catering: nshima, village chicken, kapenta, ifisashi, impwa, chikanda",
+        "quantity": 120,
+        "unit": "guest",
+        "unit_cost_zmw": 114,
+        "total_zmw": 13680,
+        "vendor_ref": "ba-mwapes-kitchen"
+      },
+      {
+        "category": "drinks",
+        "description": "Soft drinks, Maheu & water",
+        "quantity": 120,
+        "unit": "set",
+        "unit_cost_zmw": 15,
+        "total_zmw": 1800,
+        "vendor_ref": "ba-mwapes-kitchen"
+      },
+      {
+        "category": "cake",
+        "description": "3-tier celebration cake",
+        "quantity": 1,
+        "unit": "cake",
+        "unit_cost_zmw": 2800,
+        "total_zmw": 2800,
+        "vendor_ref": "chanda-cakes"
+      },
+      {
+        "category": "tents_chairs",
+        "description": "Chairs with covers",
+        "quantity": 120,
+        "unit": "chair",
+        "unit_cost_zmw": 15,
+        "total_zmw": 1800,
+        "vendor_ref": "roma-tents-decor"
+      },
+      {
+        "category": "decor",
+        "description": "Kitchen party decor package (gazebo, bride's seat, chitenge drapes)",
+        "quantity": 1,
+        "unit": "package",
+        "unit_cost_zmw": 2800,
+        "total_zmw": 2800,
+        "vendor_ref": "roma-tents-decor"
+      }
+    ],
+    "subtotal_zmw": 22880,
+    "contingency_pct": 5,
+    "contingency_zmw": 1144,
+    "total_zmw": 24024,
+    "budget_zmw": 25000,
+    "variance_zmw": 976,
+    "per_guest_zmw": 200.2
+  },
+  "vendor_assignments": [
+    {
+      "vendor_ref": "ba-mwapes-kitchen",
+      "vendor_name": "Ba Mwape's Kitchen",
+      "service": "catering",
+      "scope": "All food & drinks for 120 guests, 2 serving lines, 4 servers",
+      "estimated_zmw": 15480,
+      "deposit_pct": 30,
+      "deposit_zmw": 4644,
+      "status": "proposed"
+    },
+    {
+      "vendor_ref": "chanda-cakes",
+      "vendor_name": "Chanda Cakes & Bakes",
+      "service": "cake",
+      "scope": "3-tier cake, delivered 13:30",
+      "estimated_zmw": 2800,
+      "deposit_pct": 50,
+      "deposit_zmw": 1400,
+      "status": "proposed"
+    },
+    {
+      "vendor_ref": "roma-tents-decor",
+      "vendor_name": "Roma Tents & Decor",
+      "service": "tents_chairs",
+      "scope": "120 chairs with covers, decor package, set-up & teardown",
+      "estimated_zmw": 4600,
+      "deposit_pct": 30,
+      "deposit_zmw": 1380,
+      "status": "proposed"
+    }
+  ],
+  "assumptions": [
+    "All prices are EXAMPLE ESTIMATES for planning only; they are not vendor quotes.",
+    "120 guests (adults); children under 5 are not catered separately.",
+    "The host's home has power and water access for the caterer; no generator is budgeted.",
+    "Music comes from a family member's speaker; no DJ or MC is budgeted.",
+    "5% contingency is held back for price swings at market (Soweto/City Market)."
+  ],
+  "warnings": [
+    "Only ZMW 976 of headroom is left. Adding 15 or more guests will push the plan over budget unless the menu changes."
+  ],
+  "revision_summary": null,
+  "changes": null
+}
