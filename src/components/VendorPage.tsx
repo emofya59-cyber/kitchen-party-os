@@ -1,10 +1,12 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { formatCAT, formatZMWLong } from '../lib/format'
 import { mockPlan, mockPayments } from '../mock/demo'
+import { ChefHat, Radio } from 'lucide-react'
 
 type VendorView = {
-  event: { title: string; starts_at: string; area: string } | null
+  event: { id?: string; title: string; starts_at: string; area: string; guest_count?: number } | null
+  deposit_notice?: { message: string; receipt_id: string; deposit_zmw: number; created_at: string } | null
   vendor: { display_name: string; category: string; slug: string } | null
   booking: { status: string; quoted_zmw: number; scope: string } | null
   items: { name: string; quantity: number; unit: string }[]
@@ -13,7 +15,7 @@ type VendorView = {
 }
 
 const offline: VendorView = {
-  event: { title: "Mutale's Kitchen Party", starts_at: '2026-12-05T14:00:00+02:00', area: 'Woodlands' },
+  event: { title: "Mutale's Kitchen Party", starts_at: '2026-12-05T14:00:00+02:00', area: 'Woodlands', guest_count: 120 },
   vendor: { display_name: "Ba Mwape's Kitchen", category: 'catering', slug: 'ba-mwapes-kitchen' },
   booking: { status: 'confirmed', quoted_zmw: 15480, scope: mockPlan.vendor_assignments[0].scope },
   items: mockPlan.menu.filter((m) => m.vendor_ref === 'ba-mwapes-kitchen').map((m) => ({ name: m.name, quantity: m.quantity, unit: m.unit })),
@@ -26,25 +28,36 @@ export function VendorPage() {
   const [data, setData] = useState<VendorView | null>(supabase ? null : offline)
   const [pulse, setPulse] = useState(false)
 
+  const [synced, setSynced] = useState<string | null>(null)
+  const sig = useRef('')
   const load = useCallback(async () => {
     if (!supabase) return
     const { data: d, error } = await supabase.rpc('vendor_view', { p_vendor_ref: ref })
-    if (!error && d) { setData(d as unknown as VendorView); setPulse(true); setTimeout(() => setPulse(false), 700) }
-    else setData(offline)
+    if (error || !d) { setData((prev) => prev ?? offline); return }
+    const next = JSON.stringify(d)
+    setSynced(new Date().toISOString())
+    if (next === sig.current) return
+    const first = sig.current === ''
+    sig.current = next
+    setData(d as unknown as VendorView)
+    if (!first) { setPulse(true); setTimeout(() => setPulse(false), 900) }
   }, [ref])
 
   useEffect(() => {
     void load()
     if (!supabase) return
     const sb = supabase
-    // Change notifications only; data itself is always re-read through the vendor-scoped RPC.
-    const ch = sb.channel('vendor-view')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'menu_items' }, () => void load())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'event_vendors' }, () => void load())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'payments' }, () => void load())
-      .subscribe()
-    return () => { void sb.removeChannel(ch) }
-  }, [load])
+    // Realtime = change notification only; data is always re-read through the vendor-scoped RPC
+    // (never guest list or host finances). 3s polling covers any dropped socket.
+    const ch = sb.channel(`vendor-view-${ref}`)
+    for (const table of ['events', 'menu_items', 'event_vendors', 'payments', 'agent_bridge'])
+      ch.on('postgres_changes', { event: '*', schema: 'public', table }, () => void load())
+    ch.subscribe()
+    const poll = setInterval(() => void load(), 3000)
+    const onVis = () => { if (document.visibilityState === 'visible') void load() }
+    document.addEventListener('visibilitychange', onVis)
+    return () => { clearInterval(poll); document.removeEventListener('visibilitychange', onVis); void sb.removeChannel(ch) }
+  }, [load, ref])
 
   if (!data) return <div className="grid min-h-screen place-items-center bg-zinc-950 text-zinc-400">Loading…</div>
   const deposit = data.payments[0]
@@ -52,18 +65,20 @@ export function VendorPage() {
     <div className="min-h-screen bg-zinc-950 px-4 pb-10 pt-5 text-zinc-100">
       <div className="mx-auto max-w-md">
         <header className="flex items-center gap-3">
-          <div className="grid h-11 w-11 place-items-center rounded-xl bg-amber-600 text-2xl">🧑🏾‍🍳</div>
+          <div className="grid h-11 w-11 place-items-center rounded-xl bg-amber-600"><ChefHat className="h-6 w-6 text-white" strokeWidth={2.25} /></div>
           <div>
             <p className="text-xs uppercase tracking-wide text-amber-400">Vendor view · WoodlandsCatererBot</p>
             <h1 className="text-lg font-black">{data.vendor?.display_name}</h1>
           </div>
+          {supabase && <span className="ml-auto flex items-center gap-1 text-[10px] uppercase tracking-wider text-emerald-400" title={synced ?? ''}><Radio className="h-3.5 w-3.5 animate-pulse" /> live</span>}
         </header>
         <div className="mt-4 rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
           <p className="font-semibold">{data.event?.title}</p>
           <p className="text-sm text-zinc-400">{formatCAT(data.event?.starts_at ?? null)} · {data.event?.area}, Lusaka</p>
+          <p data-testid="vendor-guests" className={`mt-2 text-3xl font-black tabular-nums transition ${pulse ? 'text-emerald-300' : ''}`}>{data.event?.guest_count ?? '—'} <span className="text-sm font-medium text-zinc-500">guests</span></p>
           <div className="mt-3 flex items-center justify-between">
             <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${data.booking?.status === 'confirmed' ? 'bg-emerald-900 text-emerald-200' : 'bg-amber-900 text-amber-200'}`}>{data.booking?.status ?? 'not booked'}</span>
-            <span className={`text-xl font-black tabular-nums transition ${pulse ? 'text-emerald-300' : ''}`}>{formatZMWLong(data.booking?.quoted_zmw)}</span>
+            <span data-testid="vendor-quote" className={`text-xl font-black tabular-nums transition ${pulse ? 'text-emerald-300' : ''}`}>{formatZMWLong(data.booking?.quoted_zmw)}</span>
           </div>
           <p className="mt-1 text-xs text-zinc-500">{data.booking?.scope}</p>
         </div>
@@ -90,9 +105,12 @@ export function VendorPage() {
 
         <h2 className="mb-2 mt-5 text-xs font-semibold uppercase tracking-wide text-zinc-500">Deposit / payout</h2>
         <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
+          {data.deposit_notice && deposit?.status === 'succeeded' && (
+            <p data-testid="vendor-deposit-notice" className="mb-3 rounded-lg bg-emerald-950 px-3 py-2 text-xs text-emerald-200">{data.deposit_notice.message}</p>
+          )}
           {deposit ? (
             <div className="flex items-center justify-between">
-              <div><p className="text-lg font-bold">{formatZMWLong(deposit.amount_zmw)}</p><p className="text-xs text-zinc-500">{deposit.receipt_id ?? 'awaiting payment'}{deposit.paid_at ? ` · ${formatCAT(deposit.paid_at)}` : ''}</p></div>
+              <div data-testid="vendor-deposit"><p className="text-lg font-bold">{formatZMWLong(deposit.amount_zmw)}</p><p className="text-xs text-zinc-500">{deposit.receipt_id ?? 'awaiting payment'}{deposit.paid_at ? ` · ${formatCAT(deposit.paid_at)}` : ''}</p></div>
               <span className={`rounded-full px-3 py-1 text-xs font-bold ${deposit.status === 'succeeded' ? 'bg-emerald-700 text-white' : 'bg-amber-700 text-white'}`}>{deposit.status === 'succeeded' ? 'PAID' : 'PENDING'}</span>
             </div>
           ) : <p className="text-sm text-zinc-500">No deposit requested yet.</p>}

@@ -1,3 +1,4 @@
+import { ShieldCheck } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import type { AgentBridgeRow, AuditTrailRow, GuestRow, PaymentRow } from '../types/database'
 import type { Plan } from '../types/plan'
@@ -74,7 +75,7 @@ export function OpsAgent({ plan, vendors, payments, guests, audit, live, ev, onL
   return (
     <section className="rounded-2xl border border-zinc-800 bg-zinc-950 p-5">
       <header className="mb-3 flex items-center justify-between">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-400">🛡️ Daily Ops Agent</h2>
+        <h2 className="flex items-center gap-1.5 text-sm font-semibold uppercase tracking-wide text-zinc-400"><ShieldCheck className="h-4 w-4 text-emerald-400" /> Daily Ops Agent</h2>
         <span className="text-[11px] text-zinc-500">{rules.length} flag{rules.length === 1 ? '' : 's'} · Alfred pattern</span>
       </header>
       <ul className="space-y-2">
