@@ -1,6 +1,6 @@
 // Cloudflare Pages Function: /api/bridge (agent-to-agent negotiation bridge)
 //
-// GET  /api/bridge[?event_id=uuid]  -> { pending: [...], thread: [...] }   (latest first)
+// GET  /api/bridge[?event_id=uuid]  -> { pending: [...], thread: [...], latest_deposit: row|null }   (latest first)
 // POST /api/bridge  { from_agent, to_agent, action_type, message?, payload_json?, event_id? }
 //      -> { row, applied }   (quote_accepted applies the quote's menu quantities / guest_count / vendor total)
 //
@@ -66,8 +66,8 @@ export const onRequest = async ({ request, env }: Ctx): Promise<Response> => {
     if (eventId && !UUID.test(eventId)) return json({ error: 'invalid_event_id' }, 400)
     const res = await rpc(env, 'bridge_list', { p_key: provided, p_event_id: eventId })
     if (!res.ok) return res
-    const data = await res.json() as { pending: unknown[]; thread: unknown[]; event_id: string }
-    return json({ event_id: data.event_id, pending: data.pending, thread: data.thread })
+    const data = await res.json() as { pending: unknown[]; thread: unknown[]; event_id: string; latest_deposit?: unknown }
+    return json({ event_id: data.event_id, pending: data.pending, thread: data.thread, latest_deposit: data.latest_deposit ?? null })
   }
 
   if (request.method === 'POST') {
